@@ -9,8 +9,8 @@ var keen = keen.configure({
 var uuid = process.env.sensortag_uuid;
 
 function send_to_keenio(temperature,humidity,uuid) {
-    console.log('\ttemperature = %d °C', temperature.toFixed(1));
-    console.log('\thumidity = %d %', humidity.toFixed(1));
+    console.log(uuid + '\ttemperature = %d °C', temperature.toFixed(1));
+    console.log(uuid + '\thumidity = %d %', humidity.toFixed(1));
     console.log("");
 
     var eventdata = {};
@@ -30,18 +30,19 @@ function send_to_keenio(temperature,humidity,uuid) {
 console.log('Init, discover uuids ' + uuid);
 SensorTag.discover(function(sensorTag) {
     var uuid = sensorTag.uuid;
-    console.log('Discovered ' + uuid);
+    console.log(uuid + ' Discovered');
     sensorTag.connect(function() {
-	console.log('Connected');
+	console.log(uuid + ' Connected');
 	sensorTag.discoverServicesAndCharacteristics(function() {
-	    console.log('discoverServicesAndCharacteristics ok');
+	    console.log(uuid + ' discoverServicesAndCharacteristics');
             sensorTag.enableHumidity(function() {
+		console.log(uuid + ' Humidity sensor enabled');
 		sensorTag.on('humidityChange', function(temperature, humidity) {
 		    send_to_keenio(temperature,humidity,uuid);
 		});
 		
 		sensorTag.notifyHumidity(function() {
-		    console.log('notifyHumidity');
+		    console.log(uuid + 'Humidity notifications enabled');
 		});
 	    });
 	});
