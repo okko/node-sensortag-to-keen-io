@@ -37,3 +37,11 @@ PATH="$PATH:$NODE_JS_HOME/bin"
 ```
 
 
+## Discover SensorTag uuids
+The uuid per SensorTag may not be the same across machines.
+
+```sudo /opt/node/bin/node sensortag-discover.js
+```
+
+## Run daemon, as root
+sudo keen_io_projectId=XX keen_io_writeKey=YY sensortag_uuid=X /opt/node/bin/node sensortag2keenio.js
