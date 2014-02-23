@@ -1,3 +1,7 @@
+
+// 20 seconds in milliseconds
+var measurementIntervalMs = 20000;
+
 var keen = require('keen.io');
 var SensorTag = require('sensortag');
 
@@ -9,15 +13,14 @@ var keen = keen.configure({
 var uuid = process.env.sensortag_uuid;
 
 function send_to_keenio(temperature,humidity,uuid) {
-    console.log(uuid + '\ttemperature = %d °C', temperature.toFixed(1));
-    console.log(uuid + '\thumidity = %d %', humidity.toFixed(1));
-    console.log("");
+    console.log(uuid + ' \ttemperature = %d °C', temperature);
+    console.log(uuid + ' \thumidity = %d %', humidity);
 
     var eventdata = {};
     eventdata["SensorTag " + uuid] = [
 	{
-            "temperature": temperature.toFixed(1),
-            "humidity": humidity.toFixed(1)
+            "temperature": temperature,
+            "humidity": humidity
         }
     ];
     keen.addEvents(eventdata, function(err, res) {
@@ -34,16 +37,28 @@ SensorTag.discover(function(sensorTag) {
     sensorTag.connect(function() {
 	console.log(uuid + ' Connected');
 	sensorTag.discoverServicesAndCharacteristics(function() {
-	    console.log(uuid + ' discoverServicesAndCharacteristics');
-            sensorTag.enableHumidity(function() {
-		console.log(uuid + ' Humidity sensor enabled');
-		sensorTag.on('humidityChange', function(temperature, humidity) {
-		    send_to_keenio(temperature,humidity,uuid);
+	    console.log(uuid + ' DiscoverServicesAndCharacteristics');
+	    sensorTag.on('humidityChange', function(temperature, humidity) {
+		// Ignore readings of a disabled sensor
+		if (temperature == -46.85 && humidity == -6) {
+		    return;
+		}
+		var temp = temperature.toFixed(2);
+		var hum = humidity.toFixed(2);
+		sensorTag.disableHumidity(function() {
+		    console.log(uuid + ' Got reading, humidity sensor disabled for ' + measurementIntervalMs + ' ms');
 		});
-		
-		sensorTag.notifyHumidity(function() {
-		    console.log(uuid + 'Humidity notifications enabled');
+		send_to_keenio(temp,hum,uuid);
+	    });
+	    
+	    setInterval(function() {
+		sensorTag.enableHumidity(function() {
+		    console.log(uuid + ' Humidity sensor enabled to get the next reading');
 		});
+	    }, measurementIntervalMs);
+	    
+	    sensorTag.notifyHumidity(function() {
+		console.log(uuid + ' Humidity notifications enabled');
 	    });
 	});
     });
